@@ -56,13 +56,23 @@ Estas funcionan directamente sin `load_tool`. Todas las demás requieren `load_t
 
 ## Uso
 
+**Patrón obligatorio de 2 pasos:**
+
 ```typescript
-// Cargar instrucciones de una herramienta
+// Paso 1: Cargar definición de la herramienta
 load_tool({name: "supabase_list_tables"})
 
-// Listar todas las herramientas disponibles
+// Paso 2: Ejecutar la herramienta real
+supabase_list_tables({schema: "public"})
+```
+
+**Listar todas las herramientas disponibles:**
+```typescript
 load_tool({name: "__list__"})
 ```
+
+**Excepción:** 7 herramientas ALWAYS_VISIBLE funcionan directo (sin load_tool):
+`bash, read, edit, write, task, glob, grep`
 
 ## Herramientas Disponibles
 
