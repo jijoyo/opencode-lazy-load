@@ -1,107 +1,107 @@
 # opencode-lazy-load
 
-OpenCode plugin that reduces MCP tool token overhead by 88-90% through HTTP body interception and on-demand tool loading.
+Plugin de OpenCode que reduce el overhead de tokens de herramientas MCP en 88-90% mediante interceptación de cuerpo HTTP y carga bajo demanda.
 
-## Problem
+## Problema
 
-9 MCP servers × ~250 tool definitions = ~40-70k tokens consumed per conversation before a single user message. This wastes context window and increases API costs.
+9 servidores MCP × ~250 definiciones de herramientas = ~40-70k tokens consumidos por conversación antes del primer mensaje del usuario. Esto desperdicia la ventana de contexto y aumenta los costos de API.
 
-## Solution
+## Solución
 
-This plugin intercepts `globalThis.fetch` to strip ALL tool definitions from HTTP requests to the LLM. The LLM only sees `load_tool` as a callable tool plus 7 ALWAYS_VISIBLE core tools. When the LLM needs a tool, it calls `load_tool({name: "toolname"})` to get full instructions, then calls the real tool directly.
+Este plugin intercepta `globalThis.fetch` para eliminar TODAS las definiciones de herramientas de las solicitudes HTTP al LLM. El LLM solo ve `load_tool` como herramienta llamable más 7 herramientas ALWAYS_VISIBLE. Cuando el LLM necesita una herramienta, llama a `load_tool({name: "toolname"})` para obtener instrucciones completas, luego llama a la herramienta real directamente.
 
-## Results
+## Resultados
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Tools visible to LLM | ~113 (13 built-in + ~100 MCP) | 20 (load_tool + 7 ALWAYS_VISIBLE + 12 built-in) |
-| Token overhead | ~40-70k | ~6-8k |
-| Savings | - | ~88-90% |
-| MCP servers connected | 9 | 9 (still active) |
+| Métrica | Antes | Después |
+|---------|-------|---------|
+| Herramientas visibles para LLM | ~113 (13 integradas + ~100 MCP) | 20 (load_tool + 7 ALWAYS_VISIBLE + 12 integradas) |
+| Overhead de tokens | ~40-70k | ~6-8k |
+| Ahorro | - | ~88-90% |
+| Servidores MCP conectados | 9 | 9 (siguen activos) |
 
-## Architecture: 3-Layer Defense
+## Arquitectura: Defensa de 3 Capas
 
 ```
-Layer 1: HTTP Body Interception (mechanical)
-- Strips all tools except load_tool + 7 ALWAYS_VISIBLE
-- Reliability: 100%
+Capa 1: Interceptación de Cuerpo HTTP (mecánico)
+- Elimina todas las herramientas excepto load_tool + 7 ALWAYS_VISIBLE
+- Confiabilidad: 100%
 
-Layer 2: SSE Transform (mechanical)
-- Redirects direct MCP calls → load_tool
-- Reliability: 100%
+Capa 2: Transformación SSE (mecánico)
+- Redirige llamadas MCP directas → load_tool
+- Confiabilidad: 100%
 
-Layer 3: Pointer List (semi-mechanical)
-- load_tool description lists all available tools
-- Reliability: ~90% (depends on LLM)
+Capa 3: Lista de Punteros (semi-mecánico)
+- La descripción de load_tool lista todas las herramientas disponibles
+- Confiabilidad: ~90% (depende del LLM)
 ```
 
-## ALWAYS_VISIBLE Tools
+## Herramientas ALWAYS_VISIBLE
 
-7 core tools that are NEVER stripped from the HTTP body:
+7 herramientas core que NUNCA se eliminan del cuerpo HTTP:
 ```
 bash, read, edit, write, task, glob, grep
 ```
-These work directly without `load_tool`. All other tools require `load_tool`.
+Estas funcionan directamente sin `load_tool`. Todas las demás requieren `load_tool`.
 
-## Installation
+## Instalación
 
-1. Copy `index.ts` to `.opencode/plugins/lazy-load/`
-2. Add to global config `~/.config/opencode/opencode.jsonc`:
+1. Copiar `index.ts` a `.opencode/plugins/lazy-load/`
+2. Agregar a la configuración global `~/.config/opencode/opencode.jsonc`:
 ```jsonc
 {
   "plugin": ["C:\\path\\to\\opencode-lazy-load"]
 }
 ```
-3. Restart OpenCode Desktop
+3. Reiniciar OpenCode Desktop
 
-## Usage
+## Uso
 
 ```typescript
-// Load instructions for a tool
+// Cargar instrucciones de una herramienta
 load_tool({name: "supabase_list_tables"})
 
-// List all available tools
+// Listar todas las herramientas disponibles
 load_tool({name: "__list__"})
 ```
 
-## Available Tools
+## Herramientas Disponibles
 
-After loading, these tools are accessible via `load_tool`:
+Después de cargar, estas herramientas son accesibles via `load_tool`:
 
-**Built-in (always visible, no load needed):**
+**Integradas (siempre visibles, no necesitan carga):**
 bash, read, edit, write, task, glob, grep
 
-**MCP tools (load with load_tool):**
+**Herramientas MCP (cargar con load_tool):**
 supabase_*, memory_*, context7_*, playwright_*, chrome-devtools_*, sequential-thinking_*
 
-## Comparison
+## Comparación
 
-| Feature | opencode-lazy-load | omarwaly-ai/opencode-lazy-loading | keybrdist/opencode-lazy-loader |
-|---------|-------------------|-----------------------------------|-------------------------------|
-| ALWAYS_VISIBLE | ✅ 7 tools | ❌ | N/A |
-| __list__ command | ✅ | ❌ | N/A |
-| 3-layer defense | ✅ | ❌ (2 layers) | ❌ |
-| MCP proxy | ✅ Full | ⚠️ Partial | ✅ Different purpose |
-| Token savings | 88-90% | 95-98% | N/A |
-| Dependencies | 1 | 0 | 3 |
+| Característica | opencode-lazy-load | omarwaly-ai/opencode-lazy-loading | keybrdist/opencode-lazy-loader |
+|----------------|-------------------|-----------------------------------|-------------------------------|
+| ALWAYS_VISIBLE | ✅ 7 herramientas | ❌ | N/A |
+| Comando __list__ | ✅ | ❌ | N/A |
+| Defensa de 3 capas | ✅ | ❌ (2 capas) | ❌ |
+| Proxy MCP | ✅ Completo | ⚠️ Parcial | ✅ Propósito diferente |
+| Ahorro de tokens | 88-90% | 95-98% | N/A |
+| Dependencias | 1 | 0 | 3 |
 
-## How It Works
+## Cómo Funciona
 
-1. **Request Interception**: Strips all tool definitions from HTTP body except `load_tool` and ALWAYS_VISIBLE tools
-2. **Pointer List**: Appends available tool names to `load_tool` description
-3. **SSE Transform**: Intercepts LLM responses and redirects direct tool calls to `load_tool` when not yet loaded
-4. **Turn Tracking**: Tracks which tools have been loaded per turn, clears on conversation completion
+1. **Interceptación de Solicitudes**: Elimina todas las definiciones de herramientas del cuerpo HTTP excepto `load_tool` y herramientas ALWAYS_VISIBLE
+2. **Lista de Punteros**: Agrega nombres de herramientas disponibles a la descripción de `load_tool`
+3. **Transformación SSE**: Intercepta respuestas del LLM y redirige llamadas directas a herramientas hacia `load_tool` cuando aún no se han cargado
+4. **Seguimiento de Turnos**: Rastrea qué herramientas se han cargado por turno, se limpia al completar la conversación
 
-## Known Limitations
+## Limitaciones Conocidas
 
-- **Argument type coercion**: Arrays/booleans may arrive as strings to MCP servers (OpenCode bug #34652)
-- **LLM behavioral**: ~10% of calls miss `load_tool` first (SSE transform catches these)
-- **MCP tools bypass `tool.definition` hook**: OpenCode bug #31670 (PR #31671 pending)
+- **Coerción de tipos de argumentos**: Arrays/booleans pueden llegar como strings a servidores MCP (bug de OpenCode #34652)
+- **Comportamiento del LLM**: ~10% de llamadas omiten `load_tool` primero (la transformación SSE las atrapa)
+- **Herramientas MCP evitan el hook `tool.definition`**: Bug de OpenCode #31670 (PR #31671 pendiente)
 
-## License
+## Licencia
 
 MIT
 
-## Built with
+## Construido con
 
-AI-assisted development (OpenCode + Mimo v2.5).
+Desarrollo asistido por IA (OpenCode + Mimo v2.5).
