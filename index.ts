@@ -71,7 +71,21 @@ function buildPointerList(): string {
     const brief = briefOf(desc)
     pointers.push(brief ? `- ${name} - ${brief}` : `- ${name}`)
   }
-  return pointers.sort().join("\n")
+  // FIX 2026-10-28: include MCP tools — pointer list previously iterated
+  // `originals` only, so MCP tools (engram, context7, octocode...) were
+  // invisible to the LLM (it could only find them by guessing __list__).
+  const mcpPointers: string[] = []
+  for (const [name, desc] of mcpOriginals) {
+    if (isLoadToolName(name)) continue
+    if (ALWAYS_VISIBLE.includes(name)) continue
+    if (originals.has(name)) continue // built-in harvested under wrong bucket
+    const brief = briefOf(desc)
+    mcpPointers.push(brief ? `- ${name} - ${brief}` : `- ${name}`)
+  }
+  const parts: string[] = []
+  if (pointers.length) parts.push(pointers.sort().join("\n"))
+  if (mcpPointers.length) parts.push("MCP tools (need load_tool):\n" + mcpPointers.sort().join("\n"))
+  return parts.join("\n")
 }
 
 function isParsableJson(str: string): boolean {

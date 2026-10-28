@@ -1,7 +1,7 @@
 {
   "name": "opencode-lazy-load",
-  "version": "1.0.0",
-  "description": "OpenCode plugin that reduces MCP tool token overhead by 88-90% through HTTP body interception and on-demand tool loading",
+  "version": "1.0.1",
+  "description": "OpenCode plugin that cuts MCP tool-definition tokens up to 80% per request (measured) via HTTP body interception and on-demand tool loading. Savings scale with the number of MCPs.",
   "main": "index.ts",
   "type": "module",
   "keywords": [
@@ -9,16 +9,20 @@
     "mcp",
     "lazy-load",
     "token-optimization",
-    "plugin"
+    "plugin",
+    "skill",
+    "agensi"
   ],
-  "author": "Israel",
+  "author": "Israel (jijoyo)",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/israel/opencode-lazy-load"
+    "url": "https://github.com/jijoyo/opencode-lazy-load"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "devDependencies": {}
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.17.14"
+  }
 }
