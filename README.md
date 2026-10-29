@@ -2,6 +2,8 @@
 
 Plugin de OpenCode que reduce los tokens de definición de herramientas MCP hasta **80% por request (medido)** mediante interceptación de cuerpo HTTP y carga bajo demanda. El ahorro escala con el número de MCPs.
 
+> 🛒 **Disponible como skill en el marketplace de Agensi:** [MCP Token Diet](https://www.agensi.io/skills/mcp-token-diet) — incluye auditoría de tu setup MCP + este plugin instalado automáticamente (vía [Agensi.io](https://www.agensi.io)).
+
 ## Problema
 
 9 servidores MCP × ~250 definiciones de herramientas = ~40-70k tokens consumidos por conversación antes del primer mensaje del usuario. Esto desperdicia la ventana de contexto y aumenta los costos de API.
@@ -22,7 +24,7 @@ Números medidos en producción local (2026-10-28, OpenCode v1.17.x, arnés de c
 
 El ahorro **escala con el número de MCPs**: más tools definidas → más tokens que no se envían. Con 9 MCPs (~100+ tools, el setup que motivó el plugin) el ahorro estimado supera el 88%.
 
-> **Corrección de honestidad:** la cifra "88-90%" de la primera versión de este README era una estimación nunca reproducida mediante medición, no un número medido. Estos son los números reales (capturas originales en el arnés de test).
+> **Corrección de honestidad:** la cifra "88-90%" de la primera versión de este README era una estimación nunca reproducida mediante medición, no un número medido. Estos son los números reales (capturas crudas de los requests: [`bench-captures.jsonl`](./bench-captures.jsonl)).
 
 ## Arquitectura: Defensa de 3 Capas
 
